@@ -1,0 +1,4 @@
+# 隐藏所有文件和文件夹
+*
+# 强制保留 README.md
+!README.md
