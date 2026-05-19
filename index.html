@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Can We Hear from Events? Generating Speech from Event Camera</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* 核心：清新自然的学术配色（更鲜活） */
+        :root {
+            --color-primary: #2A4365; /* 深海蓝（主色，更清新） */
+            --color-secondary: #4A5568; /* 中灰（辅助色） */
+            --color-accent: #319795; /* 青绿色（强调色，清新自然） */
+            --color-accent-light: #E6FFFA; /* 淡青绿（hover背景） */
+            --color-light: #F8FAFC; /* 极浅灰（背景，更通透） */
+            --color-card: #FFFFFF; /* 纯白（卡片） */
+            --color-btn-bg: #F0F8F7; /* 按钮背景色 */
+            --color-btn-border: #B2F5EA; /* 按钮边框色 */
+            --color-footer: #718096; /* 底注文字颜色 */
+        }
+
+        /* 统一内容容器 */
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+            width: 100%;
+        }
+
+        /* 全局样式优化 */
+        body {
+            background-color: var(--color-light);
+            color: var(--color-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.7;
+            padding-top: 2rem;
+            padding-bottom: 6rem; /* 为底注预留空间 */
+            margin: 0; /* 清除默认边距 */
+            position: relative; /* 为底注定位做准备 */
+            min-height: 100vh;
+        }
+
+        /* 标题样式：学术化加粗+间距 */
+        .section-title {
+            text-align: center !important;
+            font-weight: 700;
+            color: var(--color-primary);
+            position: relative;
+            padding-bottom: 0.8rem;
+            margin-bottom: 2rem !important; /* 增加间距更透气 */
+        }
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px; /* 加长下划线更协调 */
+            height: 2.5px;
+            background-color: var(--color-accent);
+            border-radius: 2px;
+        }
+
+        /* 论文标题样式：统一字体大小 */
+        .paper-title {
+            font-size: 3xl;
+            font-size: clamp(1.875rem, 4vw, 2.5rem); /* 响应式统一字号 */
+            font-weight: 700;
+            text-align: center;
+            color: var(--color-primary);
+            line-height: 1.4;
+            letter-spacing: -0.5px;
+        }
+        .paper-title span {
+            font-size: inherit !important; /* 强制继承统一字号 */
+            font-weight: 700 !important; /* 统一加粗 */
+            color: var(--color-primary) !important; /* 统一颜色 */
+            display: block;
+            margin-top: 0.5rem !important;
+        }
+
+       /* 按钮区：清新自然的学术风格（基础样式保留） */
+.btn-academic {
+    padding: 0.6rem 1.2rem;
+    border-radius: 0.6rem;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--color-primary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border: 1px solid transparent; /* 统一边框初始值 */
+}
+
+/* ========== 各按钮专属特性配色 ========== */
+/* 1. arXiv按钮：学术蓝（柔和不刺眼） + 红色PDF图标 */
+.arxiv-btn {
+    background-color: #EFF6FF !important; /* 浅蓝背景 */
+    border-color: #BFDBFE !important; /* 淡蓝边框 */
+    color: #1E40AF !important; /* 深蓝文字 */
+}
+/* 单独设置arXiv按钮内PDF图标的颜色为红色 */
+.arxiv-btn i.fa-file-pdf {
+    color: #DC2626 !important; /* 标准红色（可根据需求调整色值） */
+}
+.arxiv-btn:hover {
+    background-color: #DBEAFE !important; /* hover加深浅蓝 */
+    border-color: #93C5FD !important; /* hover加深边框 */
+    color: #1E40AF !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(30, 64, 175, 0.12);
+}
+/* hover时保持图标红色不变（可选：也可调整hover后的图标颜色） */
+.arxiv-btn:hover i.fa-file-pdf {
+    color: #B91C1C !important; /* hover后稍深的红色，增强交互感 */
+}
+
+/* 2. Code按钮：科技黑（贴合GitHub） */
+.code-btn {
+    background-color: #F3F4F6 !important; /* 浅灰背景 */
+    border-color: #D1D5DB !important; /* 淡灰边框 */
+    color: #1F2937 !important; /* 深灰/黑色文字 */
+}
+.code-btn:hover {
+    background-color: #E5E7EB !important; /* hover加深浅灰 */
+    border-color: #9CA3AF !important; /* hover加深边框 */
+    color: #111827 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(31, 41, 55, 0.12);
+}
+
+/* 3. Video按钮：YouTube红色系（适配页面风格） */
+.video-btn {
+    background-color: #FEF2F2 !important;
+    border-color: #FCA5A5 !important;
+    color: #B91C1C !important;
+}
+.video-btn i.fa-youtube {
+    color: #FF0000 !important;
+}
+.video-btn:hover {
+    background-color: #FEE2E2 !important;
+    border-color: #F87171 !important;
+    color: #991B1B !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(185, 28, 28, 0.12);
+}
+
+/* 统一图标尺寸 */
+.btn-academic img, .youtube-icon {
+    width: 1.3rem;
+    height: 1.3rem;
+    object-fit: contain;
+}
+
+/* 禁用状态（可选：未上线按钮添加） */
+.btn-academic.disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+        /* 音频控件：统一样式 */
+        audio {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 8px; /* 更圆润 */
+            margin-top: 0.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.06));
+            border: 1px solid #E2E8F0; /* 加边框更精致 */
+        }
+
+        /* 卡片样式：清新学术化卡片 */
+        .card-academic {
+            background-color: var(--color-card);
+            border-radius: 1rem; /* 更圆润 */
+            padding: 1.8rem; /* 加大内边距 */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* 更柔和的阴影 */
+            transition: all 0.3s ease; /* 慢一点的过渡 */
+            border: 1px solid #F0F8F7; /* 轻微边框更精致 */
+        }
+        .card-academic:hover {
+            transform: translateY(-3px); /* 更自然的上浮 */
+            box-shadow: 0 8px 20px rgba(49, 151, 149, 0.1); /* 清新的阴影 */
+        }
+        /* 突出Ours卡片 */
+        .card-academic.border-l-4 {
+            border-left-color: var(--color-accent) !important;
+            border-left-width: 5px !important; /* 加粗左侧边框 */
+        }
+
+        /* Demo样本标题：更清晰的层级 */
+        .sample-title {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--color-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap; /* 适配移动端换行 */
+        }
+        .sample-title span:first-child {
+            color: var(--color-accent);
+            font-weight: 700;
+        }
+        .sample-text {
+            font-family: 'Times New Roman', Times, serif;
+            font-style: italic;
+            color: var(--color-secondary);
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        /* 视频容器优化（预留） */
+        .youtube-container {
+            margin: 0 auto;
+            width: 100%;
+        }
+        .youtube-video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%;
+            height: 0;
+            overflow: hidden;
+            border-radius: 1rem;
+            background: #F0F8F7;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+        }
+        .youtube-video-wrapper iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* 修复GitHub图标大小 */
+        .btn-academic img {
+            width: 1.3rem;
+            height: 1.3rem;
+            object-fit: contain;
+        }
+
+        /* 间距优化 */
+        section {
+            margin-bottom: 3rem !important; /* 加大区块间距更透气 */
+        }
+        .mb-10 {
+            margin-bottom: 2.5rem !important;
+        }
+
+        /* 底注样式：学术风格 */
+        .page-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            padding: 1.5rem 0;
+            background-color: var(--color-light);
+            border-top: 1px solid rgba(49, 151, 149, 0.1);
+            margin-top: 4rem;
+        }
+        .footer-text {
+            text-align: center;
+            color: var(--color-footer);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            font-family: 'Times New Roman', Times, serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+   /* ========== 基础按钮样式（强制优先级） ========== */
+.btn-academic {
+    padding: 0.6rem 1.2rem !important;
+    border-radius: 0.6rem !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.6rem !important;
+    font-size: 0.9rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    border: 1px solid #e5e7eb !important;
+    background-color: #f9fafb !important;
+    cursor: pointer !important; /* 强制可点击光标 */
+    transition: all 0.15s ease-in-out !important; /* 更快的反馈速度 */
+    /* 防止点击文字选中干扰反馈 */
+    user-select: none !important;
+    -webkit-user-select: none !important;
+}
+
+/* ========== 核心：点击抖动反馈（强制生效） ========== */
+.btn-academic:active {
+    transform: translateY(1px) scale(0.98) !important; /* 下沉+缩小=抖动反馈 */
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important; /* 阴影收缩 */
+    opacity: 0.9 !important; /* 轻微降透明度强化反馈 */
+}
+
+/* ========== Hover效果（保留） ========== */
+.btn-academic:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+
+/* ========== 禁用标记（仅视觉提示，不影响交互） ========== */
+.btn-academic.disabled {
+    opacity: 0.85 !important; /* 仅轻微降透明度 */
+    /* 完全移除干扰交互的属性 */
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+    </style>
+    <!-- 引入学术常用字体Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 1. 论文标题 - 统一字体大小 -->
+    <section class="mb-12">
+        <div class="content-container">
+            <h1 class="paper-title">
+                Can We Hear from Events?<br>
+                <span>Generating Speech from Neuromorphic Events</span>
+            </h1>
+        </div>
+    </section>
+
+<!-- 2. 功能按钮区 - 保留点击反馈 + 禁止跳转 -->
+<section class="mb-12">
+    <div class="content-container">
+        <div class="flex flex-wrap gap-4 justify-center">
+            <!-- arXiv按钮：阻止跳转 + 保留点击反馈 -->
+            <a href="javascript:void(0);" class="btn-academic arxiv-btn disabled" onclick="return false;">
+                <i class="fa-solid fa-file-pdf w-5 text-center"></i> arXiv 
+            </a>
+            <!-- Code按钮：阻止跳转 + 保留点击反馈 -->
+            <button class="btn-academic code-btn disabled" onclick="return false;">
+                <img src="https://cdn-icons-png.flaticon.com/128/25/25231.png" alt="GitHub logo">
+                Code 
+            </button>
+            <!-- Video按钮：红色YouTube图标 + 适配配色 -->
+            <a href="javascript:void(0);" class="btn-academic video-btn disabled" onclick="return false;">
+                <i class="fa-brands fa-youtube w-5 text-center"></i> Video
+            </a>
+        </div>
+    </div>
+</section>
+
+    <!-- 3. Abstract - 学术排版优化 -->
+    <section class="mb-12">
+        <div class="content-container">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 section-title">Abstract</h2>
+            <div class="card-academic">
+            <p class="text-gray-700 leading-relaxed text-justify" style="font-family: 'Times New Roman', Times, serif; font-size: 1.1rem">
+       Traditional RGB-based speech generation faces Temporal Granularity Mismatch since fixed camera exposure times inevitably blur the high-frequency articulatory transients essential for rendering emotional speech. To break this ceiling, we propose EventSpeech as a novel text-conditioned framework pioneering the use of neuromorphic events for expressive speech generation, since these microsecond-precise events naturally align with acoustic waveform dynamics. Our architecture integrates a dedicated Event Encoder to model sparse neuromorphic events alongside a multi-scale Audio Encoder featuring a Hierarchical Wavelet Contextualizer (HWC). A bidirectional alignment mechanism seamlessly synchronizes linguistic content and visual dynamics with dense acoustic features. Furthermore, we construct EVT-SPK as the first benchmark comprising large-scale synthetic data and real-world recordings from specialized neuromorphic hardware. Extensive evaluations demonstrate that EventSpeech significantly outperforms current baselines by preserving fine-grained emotions and resisting motion blur to establish a new paradigm for multimodal speech generation.            </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Method - 移除图注，优化展示 -->
+    <section class="mb-12">
+        <div class="content-container">
+            <h2 class="text-2xl font-bold mb-4 text-gray-900 section-title">Method</h2>
+            <div class="card-academic">
+                <!-- 方法图 - 移除图注 -->
+                <img src="Images/Method.png" alt="Method Framework" class="w-full rounded">
+            </div>
+        </div>
+    </section>
+    
+    <!-- 6. Demo - 学术化样本展示 -->
+    <section class="mb-12">
+        <div class="content-container">
+            <h2 class="text-2xl font-bold mb-6 text-gray-900 section-title">
+                <i class="fa-solid fa-headphones text-accent mr-2"></i>
+                Comparisons of Generated Speech Between EventSpeech and Baselines
+            </h2>
+            
+            <!-- Sample 1 -->
+            <div class="mb-10">
+                <div class="sample-title">
+                    <span>Sample 1：</span>
+                    <span class="sample-text">No, the man was not drunk. You wanted how he could take up with this stranger.</span>
+                </div>
+                <!-- 第一排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- GT -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">GT</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_GT.png" alt="GT Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_GT.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech-T (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech-T (Ours)</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_EventSpeech-T.png" alt="EventSpeech-T Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_EventSpeech-T.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech (Ours)</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_Ours.png" alt="Ours Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_Ours.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VALL-E2 -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VALL-E 2</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_VALL_E2.png" alt="VALL-E2 Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_VALL_E2.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第二排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- MATCHA-TTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MATCHA-TTS</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_MATCHA_TTS.png" alt="MATCHA-TTS Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_MATCHA_TTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- MMAudio+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MMAudio+AS</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_MMAudio+AS.png" alt="MMAudio+AS Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_MMAudio_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- Diff-Foley+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">Diff-Foley+AS</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_Diff_Foley+AS.png" alt="Diff-Foley+AS Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_Diff_Foley_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_VTS.png" alt="VTS Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_VTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第三排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- VoiceCraft-Dub -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VoiceCraft-Dub</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_VoiceCraft-Dub.png" alt="VoiceCraft-Dub Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_VoiceCraft-Dub.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- HPMDubbing -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">HPMDubbing</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_HPMDubbing.png" alt="HPMDubbing Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_HPMDubbing.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- StyleDubber -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">StyleDubber</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_StyleDubber.png" alt="StyleDubber Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_StyleDubber.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS+VE -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS+VE</h4>
+                        <img src="Sample_Mel/Sample_1/Mel_VTS+AE.png" alt="VTS+VE Spectrogram 1" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_1/audio_VTS_AE.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample 2 -->
+            <div class="mb-10">
+                <div class="sample-title">
+                    <span>Sample 2：</span>
+                    <span class="sample-text">Dogs are sitting by the door.</span>
+                </div>
+                <!-- 第一排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- GT -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">GT</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_GT.png" alt="GT Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_GT.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech-T (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech-T (Ours)</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_EventSpeech-T.png" alt="EventSpeech-T Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_EventSpeech-T.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech (Ours)</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_Ours.png" alt="Ours Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_Ours.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VALL-E2 -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VALL-E 2</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_VALL_E2.png" alt="VALL-E2 Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_VALL_E2.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第二排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- MATCHA-TTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MATCHA-TTS</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_MATCHA_TTS.png" alt="MATCHA-TTS Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_MATCHA_TTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- MMAudio+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MMAudio+AS</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_MMAudio+AS.png" alt="MMAudio+AS Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_MMAudio_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- Diff-Foley+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">Diff-Foley+AS</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_Diff_Foley+AS.png" alt="Diff-Foley+AS Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_Diff_Foley_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_VTS.png" alt="VTS Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_VTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第三排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- VoiceCraft-Dub -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VoiceCraft-Dub</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_VoiceCraft-Dub.png" alt="VoiceCraft-Dub Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_VoiceCraft-Dub.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- HPMDubbing -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">HPMDubbing</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_HPMDubbing.png" alt="HPMDubbing Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_HPMDubbing.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- StyleDubber -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">StyleDubber</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_StyleDubber.png" alt="StyleDubber Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_StyleDubber.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS+VE -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS+VE</h4>
+                        <img src="Sample_Mel/Sample_2/Mel_VTS+AE.png" alt="VTS+VE Spectrogram 2" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_2/audio_VTS_AE.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample 3 -->
+            <div class="mb-10">
+                <div class="sample-title">
+                    <span>Sample 3：</span>
+                    <span class="sample-text">His superiors had also christis, saying it was the way for ittererhoner.</span>
+                </div>
+                <!-- 第一排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- GT -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">GT</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_GT.png" alt="GT Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_GT.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech-T (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech-T (Ours)</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_EventSpeech-T.png" alt="EventSpeech-T Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_EventSpeech-T.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech (Ours)</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_Ours.png" alt="Ours Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_Ours.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VALL-E2 -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VALL-E 2</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_VALL_E2.png" alt="VALL-E2 Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_VALL_E2.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第二排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- MATCHA-TTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MATCHA-TTS</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_MATTCHA_TTS.png" alt="MATCHA-TTS Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_MATCHA_TTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- MMAudio+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MMAudio+AS</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_MMAudio+AS.png" alt="MMAudio+AS Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_MMAudio_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- Diff-Foley+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">Diff-Foley+AS</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_Diff_Foley+AS.png" alt="Diff-Foley+AS Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_Diff_Foley_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_VTS.png" alt="VTS Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_VTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第三排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- VoiceCraft-Dub -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VoiceCraft-Dub</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_VoiceCraft-Dub.png" alt="VoiceCraft-Dub Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_VoiceCraft-Dub.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- HPMDubbing -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">HPMDubbing</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_HPMDubbing.png" alt="HPMDubbing Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_HPMDubbing.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- StyleDubber -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">StyleDubber</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_StyleDubber.png" alt="StyleDubber Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_StyleDubber.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS+VE -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS+VE</h4>
+                        <img src="Sample_Mel/Sample_3/Mel_VTS+AE.png" alt="VTS+VE Spectrogram 3" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_3/audio_VTS_AE.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sample 4 -->
+            <div class="mb-10">
+                <div class="sample-title">
+                    <span>Sample 4：</span>
+                    <span class="sample-text">Dogs are sitting by the door.</span>
+                </div>
+                <!-- 第一排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- GT -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">GT</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_GT.png" alt="GT Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_GT.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech-T (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech-T (Ours)</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_EventSpeech-T.png" alt="EventSpeech-T Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_EventSpeech-T.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- EventSpeech (Ours) -->
+                    <div class="card-academic border-l-4 border-accent">
+                        <h4 class="text-sm font-medium mb-2 text-center text-accent">EventSpeech (Ours)</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_Ours.png" alt="Ours Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_Ours.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VALL-E2 -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VALL-E 2</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_VALL_E2.png" alt="VALL-E2 Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_VALL_E2.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第二排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    <!-- MATCHA-TTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MATCHA-TTS</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_MATCHA_TTS.png" alt="MATCHA-TTS Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_MATCHA_TTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- MMAudio+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">MMAudio+AS</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_MMAudio+AS.png" alt="MMAudio+AS Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_MMAudio_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- Diff-Foley+AS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">Diff-Foley+AS</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_Diff_Foley+AS.png" alt="Diff-Foley+AS Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_Diff_Foley_AS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_VTS.png" alt="VTS Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_VTS.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+                <!-- 第三排 4个样本 -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- VoiceCraft-Dub -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VoiceCraft-Dub</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_VoiceCraft-Dub.png" alt="VoiceCraft-Dub Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_VoiceCraft-Dub.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- HPMDubbing -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">HPMDubbing</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_HPMDubbing.png" alt="HPMDubbing Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_HPMDubbing.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- StyleDubber -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">StyleDubber</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_StyleDubber.png" alt="StyleDubber Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_StyleDubber.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                    <!-- VTS+VE -->
+                    <div class="card-academic">
+                        <h4 class="text-sm font-medium mb-2 text-center text-gray-700">VTS+VE</h4>
+                        <img src="Sample_Mel/Sample_4/Mel_VTS+AE.png" alt="VTS+VE Spectrogram 4" class="w-full rounded mb-2">
+                        <audio controls>
+                            <source src="Sample_Audio/Sample_4/audio_VTS_AE.wav" type="audio/mpeg">
+                            Your browser does not support the audio element.
+                        </audio>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 页面底注 -->
+    <footer class="page-footer">
+        <p class="footer-text">
+            Thank you for review!
+        </p>
+    </footer>
+</body>
+</html>
