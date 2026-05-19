@@ -276,24 +276,26 @@
             margin: 0 auto;
             padding: 0 1.5rem;
         }
-   /* ========== 基础按钮样式（强制优先级） ========== */
+  /* ========== 基础按钮样式（强制优先级） ========== */
 .btn-academic {
-    padding: 0.6rem 1.2rem !important;
-    border-radius: 0.6rem !important;
+    padding: 0.9rem 2.2rem !important; /* 增大内边距：更高 + 更宽 */
+    border-radius: 0.7rem !important; /* 稍微圆润一点更高级 */
     display: inline-flex !important;
     align-items: center !important;
-    gap: 0.6rem !important;
-    font-size: 0.9rem !important;
-    font-weight: 500 !important;
+    justify-content: center !important;
+    gap: 0.8rem !important;
+    font-size: 1rem !important; /* 字体稍大更清晰 */
+    font-weight: 600 !important;
     text-decoration: none !important;
     border: 1px solid #e5e7eb !important;
     background-color: #f9fafb !important;
-    cursor: pointer !important; /* 强制可点击光标 */
-    transition: all 0.15s ease-in-out !important; /* 更快的反馈速度 */
-    /* 防止点击文字选中干扰反馈 */
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
     user-select: none !important;
     -webkit-user-select: none !important;
+    min-width: 140px !important; /* 统一最小宽度，排版更整齐 */
 }
+
 
 /* ========== 核心：点击抖动反馈（强制生效） ========== */
 .btn-academic:active {
@@ -367,8 +369,7 @@
         </div>
     </section>
 
-  <!-- Video Demo 模块 -->
-<section class="mb-12">
+  <section class="mb-12">
     <div class="content-container">
         <h2 class="text-2xl font-bold mb-6 text-gray-900 section-title">
             <i class="fa-brands fa-youtube text-red-600 mr-2"></i>
@@ -376,15 +377,19 @@
         </h2>
         <div class="card-academic">
             <div class="youtube-video-wrapper">
-                <!-- 把下面引号里替换成你的视频链接 -->
-                <video controls width="100%" height="100%">
-                    <source src="https://youtu.be/2xYABk71gBg" type="video/mp4">
-                    您的浏览器不支持播放该视频
-                </video>
+                <iframe 
+                    src="shturl.cc/3HnmxyHMlE1bFND4pc8GSxKDWXUL2EK"
+                    title="EventSpeech Video Demo"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen
+                    style="width:100%;height:100%;position:absolute;top:0;left:0;">
+                </iframe>
             </div>
         </div>
     </div>
 </section>
+
 
     
     <!-- 4. Method - 移除图注，优化展示 -->
