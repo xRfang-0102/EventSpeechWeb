@@ -332,26 +332,29 @@
         </div>
     </section>
 
-<!-- 2. 功能按钮区 - 保留点击反馈 + 禁止跳转 -->
+<!-- 2. 功能按钮区 - 正常跳转链接 + 保留点击效果 -->
 <section class="mb-12">
     <div class="content-container">
         <div class="flex flex-wrap gap-4 justify-center">
-            <!-- arXiv按钮：阻止跳转 + 保留点击反馈 -->
-            <a href="javascript:void(0);" class="btn-academic arxiv-btn disabled" onclick="return false;">
+            <!-- arXiv按钮：可跳转 -->
+            <a href="https://arxiv.org/" class="btn-academic arxiv-btn" target="_blank">
                 <i class="fa-solid fa-file-pdf w-5 text-center"></i> arXiv 
             </a>
-            <!-- Code按钮：阻止跳转 + 保留点击反馈 -->
-            <a herf = "https://github.com/xRfang-0102/EventSpeech.git";class="btn-academic code-btn disabled" onclick="return false;">
+
+            <!-- Code按钮：修复标签错误 + 跳转到GitHub -->
+            <a href="https://github.com/xRfang-0102/EventSpeech.git" class="btn-academic code-btn" target="_blank">
                 <img src="https://cdn-icons-png.flaticon.com/128/25/25231.png" alt="GitHub logo">
                 Code 
-            </button>
-            <!-- Video按钮：红色YouTube图标 + 适配配色 -->
-            <a href="javascript:void(0);" class="btn-academic video-btn disabled" onclick="return false;">
+            </a>
+
+            <!-- Video按钮：可跳转YouTube -->
+            <a href="https://www.youtube.com/" class="btn-academic video-btn" target="_blank">
                 <i class="fa-brands fa-youtube w-5 text-center"></i> Video
             </a>
         </div>
     </div>
 </section>
+
 
     <!-- 3. Abstract - 学术排版优化 -->
     <section class="mb-12">
